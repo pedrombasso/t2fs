@@ -11,7 +11,7 @@ void printFAT(int sector) {
     int j;
     unsigned char buffer[SECTOR_SIZE];
     printf("\n");
-    read_sector(superBlock.pFATSectorStart + sector,buffer);
+    read_sector(super_bloco.pFATSectorStart + sector,buffer);
     for (j = 0; j < 256; j++){
         printf("%x ",buffer[j]);
     }
@@ -20,7 +20,7 @@ void printFAT(int sector) {
 
 void printDataSector(int clusterNo) {
     int j;
-    int clusterByteSize = sizeof(unsigned char)*SECTOR_SIZE*superBlock.SectorsPerCluster;
+    int clusterByteSize = sizeof(unsigned char)*SECTOR_SIZE*super_bloco.SectorsPerCluster;
     unsigned char* buffer = malloc(clusterByteSize);
     readCluster(clusterNo, buffer);
     printf("\n");
@@ -31,7 +31,7 @@ void printDataSector(int clusterNo) {
 }
 void printDataCluster(int clusterNo) {
     int j;
-    int clusterByteSize = sizeof(unsigned char)*SECTOR_SIZE*superBlock.SectorsPerCluster;
+    int clusterByteSize = sizeof(unsigned char)*SECTOR_SIZE*super_bloco.SectorsPerCluster;
     unsigned char* buffer = malloc(clusterByteSize);
     buffer = readDataCluster(clusterNo);
     printf("\n");
@@ -44,8 +44,8 @@ void printDataCluster(int clusterNo) {
 
 void printFolders(int clusterNo) {
     int i;
-    int folderSize = ( (SECTOR_SIZE*superBlock.SectorsPerCluster) / sizeof(struct t2fs_record) );
-    struct t2fs_record* folderContent = malloc(sizeof(struct t2fs_record)*( (SECTOR_SIZE*superBlock.SectorsPerCluster) / sizeof(struct t2fs_record) ));
+    int folderSize = ( (SECTOR_SIZE*super_bloco.SectorsPerCluster) / sizeof(struct t2fs_record) );
+    struct t2fs_record* folderContent = malloc(sizeof(struct t2fs_record)*( (SECTOR_SIZE*super_bloco.SectorsPerCluster) / sizeof(struct t2fs_record) ));
     folderContent = readDataClusterFolder(clusterNo);
     for(i = 0; i < folderSize; i++) {
         printf("\nTYPEVAL: %x\n", folderContent[i].TypeVal);
@@ -56,7 +56,7 @@ void printFolders(int clusterNo) {
     }
 }
 int main() {
-    init_disk();
+    iniciar_disco();
     printFolders(currentPath.clusterNo);
     printFAT(0);
     printf("\nDataCluster ANTES DA DELECAO 4:\n");
