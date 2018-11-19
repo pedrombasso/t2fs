@@ -78,12 +78,12 @@ int chdir2 (char *pathname) {
 }
 
 int getcwd2 (char *pathname, int size) {
-	if((strlen(currentPath.absolute) + 1) > size){
+	if((strlen(caminho_atual.absolute) + 1) > size){
 		return -1;
 	}
 	else{
 		memset(pathname,'\0',size);
-		strcpy(pathname, currentPath.absolute);
+		strcpy(pathname, caminho_atual.absolute);
 		return 0;
 	}
 }
