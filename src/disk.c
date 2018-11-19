@@ -7,8 +7,6 @@
 
 int disk_initialized = 0;
 
-//aa
-
 DISK_DIR openDirectories[10];
 
 DWORD convertToDword(unsigned char* buffer) {
