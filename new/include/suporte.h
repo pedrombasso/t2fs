@@ -8,6 +8,9 @@
 
 #define MAX_NUM_FILES 10
 
+#define LIMITES_ABERTOS 10 
+
+
 struct t2fs_superbloco super_bloco;
 
 DWORD convertToDword(unsigned char* buffer);
@@ -120,7 +123,7 @@ typedef struct currp {
     int clusterNo;
 } CURRENT_PATH;
 
-CURRENT_PATH currentPath;
+CURRENT_PATH caminho_atual;
 
 typedef struct diskd {
     DIR2 handle;
@@ -129,7 +132,7 @@ typedef struct diskd {
     DIRENT2 directory;
 } DISK_DIR;
 
-DISK_FILE openFiles[10];
+DISK_FILE arquivos_abertos[LIMITES_ABERTOS];
 
 void freeOpenDirectory(DISK_DIR *opendirectory);
 
