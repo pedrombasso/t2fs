@@ -10,49 +10,47 @@ int identify2 (char *name, int size){
 }
 
 FILE2 create2 (char *filename) {
-	init_disk();
+	iniciar_disco();
 	if(strcmp(filename,"") ==0 || strcmp(filename,"/") ==0 )
 		return -1;
 	return createFile(filename);
 }
 
 int delete2 (char *filename) {
-	init_disk();
+	iniciar_disco();
 	if(strcmp(filename,"") ==0 || strcmp(filename,"/") ==0 )
 		return -1;
     return deleteFile(filename);
 }
 
 FILE2 open2 (char *filename) {
-	init_disk();
+	iniciar_disco();
 	if(strcmp(filename,"") ==0 || strcmp(filename,"/") ==0)
 		return -1;
     return openFile(filename);
 }
 
 int close2 (FILE2 handle) {
-	init_disk();
+	iniciar_disco();
 	if(handle < 0)
 	 	return -1;
     return closeFile(handle);
 }
 
 int read2 (FILE2 handle, char *buffer, int size) {
-	init_disk();
+	iniciar_disco();
 	if(handle < 0)
 	 	return -1;
 	return readFile(handle,buffer,size);
 }
 
 int write2 (FILE2 handle, char *buffer, int size) {
-	init_disk();
+	iniciar_disco();
 	int bytesWritten;
 
 	if(handle < 0)
 	 	return -1;
 	bytesWritten = writeFile(handle,buffer,size);
-
-	//TODO: MODIFICAR SIZEOFFILE
     return bytesWritten;
 }
 
@@ -65,7 +63,7 @@ int seek2 (FILE2 handle, DWORD offset) {
 }
 
 int mkdir2 (char *pathname) {
-	init_disk();
+	iniciar_disco();
 	if(strcmp(pathname,"") ==0 )
 		return -1;
     return mkdir(pathname);
@@ -91,7 +89,7 @@ int getcwd2 (char *pathname, int size) {
 }
 
 DIR2 opendir2 (char *pathname) {
-	init_disk();
+	iniciar_disco();
 	if(strcmp(pathname,"") ==0 )
 		return -1;
 	return openDir(pathname);
@@ -102,7 +100,7 @@ int readdir2 (DIR2 handle, DIRENT2 *dentry) {
 }
 
 int closedir2 (DIR2 handle) {
-	init_disk();
+	iniciar_disco();
 	if(handle < 0)
 		return -1;
     return closeDir(handle);

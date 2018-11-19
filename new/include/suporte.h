@@ -8,7 +8,7 @@
 
 #define MAX_NUM_FILES 10
 
-struct t2fs_superbloco superBlock;
+struct t2fs_superbloco super_bloco;
 
 DWORD convertToDword(unsigned char* buffer);
 
@@ -18,7 +18,7 @@ unsigned char* wordToLtlEnd(WORD entry);
 
 unsigned char* dwordToLtlEnd(DWORD entry);
 
-int init_disk();
+int iniciar_disco();
 
 int writeInFAT(int clusterNo, DWORD value);
 
