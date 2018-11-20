@@ -405,28 +405,28 @@ int separar_caminho(char * caminho, char ** FristStringOutput, char ** SecondStr
 
 
 int mkdir(char * caminho){
-    char * absoluto;
+    char * absolute;
     char * primeira_saida;
     char * segunda_saida;
     int firstClusterFreeInFAT;
     int clusterDotDot;
-    converter_caminho_absoluto(caminho, caminho_atual.absoluto, &absoluto);
-    separar_caminho(absoluto, &primeira_saida, &segunda_saida);
+    converter_caminho_absoluto(caminho, caminho_atual.absolute, &absolute);
+    separar_caminho(absolute, &primeira_saida, &segunda_saida);
 
     if(procurar_cluster(&firstClusterFreeInFAT) == -1){
-        free(absoluto);
+        free(absolute);
         free(primeira_saida);
         free(segunda_saida);
         return -1;
     }
     if(strlen(segunda_saida) == 0){
-        free(absoluto);
+        free(absolute);
         free(primeira_saida);
         free(segunda_saida);
         return -1;
     }
     if(!(nome_correto(segunda_saida))){
-        free(absoluto);
+        free(absolute);
         free(primeira_saida);
         free(segunda_saida);
         return -1;
@@ -437,7 +437,7 @@ int mkdir(char * caminho){
     else{
         clusterDotDot = caminho_para_cluster(primeira_saida);
             if(clusterDotDot == -1){
-                free(absoluto);
+                free(absolute);
                 free(primeira_saida);
                 free(segunda_saida);
                 return -1;
@@ -445,7 +445,7 @@ int mkdir(char * caminho){
         }
 
     if(esta_no_cluser(clusterDotDot, segunda_saida, TYPEVAL_DIRETORIO)){
-        free(absoluto);
+        free(absolute);
         free(primeira_saida);
         free(segunda_saida);
         return -1;
@@ -483,7 +483,7 @@ int mkdir(char * caminho){
 
     escrever_FAT(firstClusterFreeInFAT, FIM_ARQUIVO);
 
-    free(absoluto);
+    free(absolute);
     free(primeira_saida);
     free(segunda_saida);
 
