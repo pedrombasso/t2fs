@@ -525,7 +525,7 @@ int zerar(int clusterNo, struct t2fs_record pasta, char * fileName, BYTE tipo_en
     return -1;
 }
 
-int esta_no_cluser(int clusterNo, char * fileName, BYTE TypeValEntrada) {
+int esta_no_cluser(int clusterNo, char * fileName, BYTE tipo_entrada) {
     int i;
     int wasFound = 0;
     int clusterByteSize = sizeof(unsigned char)*SECTOR_SIZE*super_bloco.SectorsPerCluster;
@@ -536,7 +536,7 @@ int esta_no_cluser(int clusterNo, char * fileName, BYTE TypeValEntrada) {
         ler_cluster(clusterNo, buffer);
 
         for(i = 0; i < clusterByteSize; i+= sizeof(struct t2fs_record)) {
-            if ( (strcmp((char *)buffer+i+1, fileName) == 0) && (((BYTE) buffer[i]) == TypeValEntrada) && !wasFound ) {
+            if ( (strcmp((char *)buffer+i+1, fileName) == 0) && (((BYTE) buffer[i]) == tipo_entrada) && !wasFound ) {
                 wasFound = 1;
             } 
         }
@@ -551,14 +551,14 @@ int esta_no_cluser(int clusterNo, char * fileName, BYTE TypeValEntrada) {
     return 0;
 }
 
-int nome_correto(char * name){
-    if(strcmp(name, ".") == 0){
+int nome_correto(char * nome){
+    if(strcmp(nome, ".") == 0){
         return 0;
     }
-    if(strcmp(name, "..") == 0){
+    if(strcmp(nome, "..") == 0){
         return 0;
     }
-    if(name[0] == '/'){
+    if(nome[0] == '/'){
         return 0;
     }
 
@@ -595,17 +595,17 @@ DWORD get_tipo(char *absolute){
     return TYPEVAL_INVALIDO;
 }
 
-DIR2 openDir(char *path){
+DIR2 openDir(char *caminho){
     int i;
     char *absolute=malloc(sizeof(char)*2);
     int dirCluster;
     char *linkOutput;
     int retornoLink;
 
-    if(strcmp(path,"/") == 0){
+    if(strcmp(caminho,"/") == 0){
         strcpy(absolute,"/");
     }else{
-        retornoLink=link(path, &linkOutput);
+        retornoLink=link(caminho, &linkOutput);
         if(retornoLink == -1)
             return -1; 
         if(retornoLink < 0){
@@ -615,7 +615,7 @@ DIR2 openDir(char *path){
             return -1;
             } 
         }else{
-            if(converter_caminho_absoluto(path, caminho_atual.absolute, &absolute) == -1)
+            if(converter_caminho_absoluto(caminho, caminho_atual.absolute, &absolute) == -1)
             return -2;
         }
         if(get_tipo(absolute) != TYPEVAL_DIRETORIO){
@@ -628,7 +628,7 @@ DIR2 openDir(char *path){
         if(diretorios_abertos[i].handle == -1){
             diretorios_abertos[i].handle = i;
             diretorios_abertos[i].noReads=0;
-            if(strcmp(absolute,"/") == 0 || strcmp(path,"/") ==0 ){
+            if(strcmp(absolute,"/") == 0 || strcmp(caminho,"/") ==0 ){
             diretorios_abertos[i].clusterDir=super_bloco.RootDirCluster;
             }
             else{
@@ -943,7 +943,7 @@ int fechar_arquivo_cluster(int clusterToClose){
     return -1;
 }
 
-int link(char * path, char ** output) {
+int link(char * caminho, char ** output) {
     int i;
     int isLink = 0;
     int clusterByteSize = sizeof(unsigned char)*SECTOR_SIZE*super_bloco.SectorsPerCluster;
@@ -955,7 +955,7 @@ int link(char * path, char ** output) {
     int linkClusterNo;
 
 
-    converter_caminho_absoluto(path, caminho_atual.absolute, &absolute);    
+    converter_caminho_absoluto(caminho, caminho_atual.absolute, &absolute);    
     separar_caminho(absolute, &pathToFile, &fileName);
 
     pathClusterNo = caminho_para_cluster(pathToFile);
@@ -982,12 +982,12 @@ int link(char * path, char ** output) {
         free(absolute);
         free(fileName);
         free(pathToFile);
-        *output = malloc(sizeof(char)*(strlen(path)+1));
-        strcpy(*output,path);
+        *output = malloc(sizeof(char)*(strlen(caminho)+1));
+        strcpy(*output,caminho);
         return 0;
     }
     
-    linkClusterNo = caminho_para_cluster(path);
+    linkClusterNo = caminho_para_cluster(caminho);
 
     memset(buffer,0,clusterByteSize);
 
