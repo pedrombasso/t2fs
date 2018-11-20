@@ -1168,7 +1168,7 @@ int ler_arquivo (FILE2 handle, char *buffer, int size){
     return i;
 }
 
-int setar_tamanho (FILE2 handle){ 
+int tamanho_real (FILE2 handle){ 
 
     int found=0;
     int currentPointerInCluster;
@@ -1222,7 +1222,7 @@ int setar_tamanho (FILE2 handle){
 int setar_tamanho(FILE2 handle){
 
     int filesize;
-    filesize=setar_tamanho(handle);
+    filesize=tamanho_real(handle);
     if(filesize <0)
     {
         return -2;
