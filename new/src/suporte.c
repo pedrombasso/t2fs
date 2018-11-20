@@ -118,7 +118,7 @@ int ler_FAT(int clusterNo, DWORD* valor) {
 
 
 int escrever_cluster_pasta(int clusterNo, struct t2fs_record folder) {
-    int k = 0;
+    int i, k = 0;
     int escrito = 0;
     unsigned int setor_destino;
     int clusterByteSize = sizeof(unsigned char)*SECTOR_SIZE*super_bloco.SectorsPerCluster;
@@ -128,7 +128,7 @@ int escrever_cluster_pasta(int clusterNo, struct t2fs_record folder) {
     if (setor >= super_bloco.DataSectorStart && setor < super_bloco.NofSectors) {
         ler_cluster(clusterNo, buffer);
 
-        for(int i = 0; i < clusterByteSize; i+= sizeof(struct t2fs_record)) {
+        for(i = 0; i < clusterByteSize; i+= sizeof(struct t2fs_record)) {
             if ( ((BYTE) buffer[i]) == 0 && !escrito ) {
                 memcpy(buffer + i,&(folder.TypeVal),1);
                 memcpy((buffer + i + 1),folder.name,51);
@@ -156,11 +156,11 @@ int escrever_cluster_pasta(int clusterNo, struct t2fs_record folder) {
 
 int ler_cluster(int clusterNo, unsigned char* buffer) {
     int i = 0;
-    unsigned int sectorToRead;
+    unsigned int setor_a_ler;
     unsigned int sector = super_bloco.DataSectorStart + super_bloco.SectorsPerCluster*clusterNo;
 
-    for(sectorToRead = sector; sectorToRead < (sector + super_bloco.SectorsPerCluster); sectorToRead++) {
-        read_sector(sectorToRead,buffer + i);
+    for(setor_a_ler = sector; setor_a_ler < (sector + super_bloco.SectorsPerCluster); setor_a_ler++) {
+        read_sector(setor_a_ler,buffer + i);
         i += 256;
     }
     return 0;
