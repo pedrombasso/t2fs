@@ -118,7 +118,7 @@ int ler_FAT(int clusterNo, DWORD* value) {
 }
 
 
-int ler_cluster_pasta(int clusterNo, struct t2fs_record folder) {
+int escrever_cluster_pasta(int clusterNo, struct t2fs_record folder) {
     int i;
     int k = 0;
     int written = 0;
