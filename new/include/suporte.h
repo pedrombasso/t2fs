@@ -20,9 +20,9 @@ unsigned char* dword_para_endereco(DWORD entry);
 
 int iniciar_disco();
 
-int escrever_FAT(int clusterNo, DWORD value);
+int escrever_FAT(int clusterNo, DWORD valor);
 
-int ler_FAT(int clusterNo, DWORD* value);
+int ler_FAT(int clusterNo, DWORD* valor);
 
 struct t2fs_record* ler_cluster_pasta(int clusterNo);
 

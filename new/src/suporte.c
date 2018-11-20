@@ -71,30 +71,30 @@ int iniciar_disco() {
 }
 
 
-int escrever_FAT(int clusterNo, DWORD value) {
+int escrever_FAT(int clusterNo, DWORD valor) {
     int offset = clusterNo/64;
-    unsigned int sector = super_bloco.pFATSectorStart + offset;
-    int sectorOffset = (clusterNo % 64)*4;
+    unsigned int setor = super_bloco.pFATSectorStart + offset;
+    int offset = (clusterNo % 64)*4;
     unsigned char buffer[SECTOR_SIZE] = {0};
-    unsigned char* writeValue = malloc(sizeof(unsigned char)*4);
+    unsigned char* valor_escrita = malloc(sizeof(unsigned char)*4);
     DWORD badSectorCheck;
 
-    if (value == 0x00000001) {
+    if (valor == 0x00000001) {
         return -1;
     }
 
-    if (sector >= super_bloco.pFATSectorStart && sector < super_bloco.DataSectorStart) { 
+    if (setor >= super_bloco.pFATSectorStart && setor < super_bloco.DataSectorStart) { 
         ler_FAT(clusterNo, &badSectorCheck);
         if (badSectorCheck == SETOR_INACESSIVEL) { 
             return -1;
         }
 
-        read_sector(sector,buffer);
-        writeValue = dword_para_endereco(value);
-        memcpy(buffer + sectorOffset, writeValue,4);
-        write_sector(sector,buffer);
+        read_sector(setor,buffer);
+        valor_escrita = dword_para_endereco(valor);
+        memcpy(buffer + offset, valor_escrita,4);
+        write_sector(setor,buffer);
 
-        free(writeValue);
+        free(valor_escrita);
 
         
         return 0;
@@ -102,15 +102,15 @@ int escrever_FAT(int clusterNo, DWORD value) {
     return -1;
 }
 
-int ler_FAT(int clusterNo, DWORD* value) {
+int ler_FAT(int clusterNo, DWORD* valor) {
     int offset = clusterNo/64;
-    unsigned int sector = super_bloco.pFATSectorStart + offset;
-    int sectorOffset = (clusterNo % 64)*4;
+    unsigned int setor = super_bloco.pFATSectorStart + offset;
+    int offset = (clusterNo % 64)*4;
     unsigned char buffer[SECTOR_SIZE];
 
-    if (sector >= super_bloco.pFATSectorStart && sector < super_bloco.DataSectorStart) { 
-        read_sector(sector,buffer);
-        *value = converter_para_DWORD(buffer + sectorOffset);
+    if (setor >= super_bloco.pFATSectorStart && setor < super_bloco.DataSectorStart) { 
+        read_sector(setor, buffer);
+        *valor = converter_para_DWORD(buffer + offset);
         return 0;
     }
     return -1;
