@@ -20,7 +20,7 @@ int delete2 (char *filename) {
 	iniciar_disco();
 	if(strcmp(filename,"") ==0 || strcmp(filename,"/") ==0 )
 		return -1;
-    return deleteFile(filename);
+    return deletar_arquivo(filename);
 }
 
 FILE2 open2 (char *filename) {
@@ -34,14 +34,14 @@ int close2 (FILE2 handle) {
 	iniciar_disco();
 	if(handle < 0)
 	 	return -1;
-    return closeFile(handle);
+    return fechar_arquivo(handle);
 }
 
 int read2 (FILE2 handle, char *buffer, int size) {
 	iniciar_disco();
 	if(handle < 0)
 	 	return -1;
-	return readFile(handle,buffer,size);
+	return ler_arquivo(handle,buffer,size);
 }
 
 int write2 (FILE2 handle, char *buffer, int size) {
@@ -50,7 +50,7 @@ int write2 (FILE2 handle, char *buffer, int size) {
 
 	if(handle < 0)
 	 	return -1;
-	bytesWritten = writeFile(handle,buffer,size);
+	bytesWritten = escreve_arquivo(handle,buffer,size);
     return bytesWritten;
 }
 

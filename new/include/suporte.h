@@ -13,53 +13,51 @@
 
 struct t2fs_superbloco super_bloco;
 
-DWORD convertToDword(unsigned char* buffer);
+DWORD converter_para_DWORD(unsigned char* buffer);
 
-WORD convertToWord(unsigned char* buffer);
+WORD converter_para_WORD(unsigned char* buffer);
 
-unsigned char* wordToLtlEnd(WORD entry);
+unsigned char* word_para_endereco(WORD entry);
 
-unsigned char* dwordToLtlEnd(DWORD entry);
+unsigned char* dword_para_endereco(DWORD entry);
 
 int iniciar_disco();
 
-int writeInFAT(int clusterNo, DWORD value);
+int escrever_FAT(int clusterNo, DWORD value);
 
-int readInFAT(int clusterNo, DWORD* value);
+int ler_FAT(int clusterNo, DWORD* value);
 
-struct t2fs_record* readDataClusterFolder(int clusterNo);
+struct t2fs_record* ler_cluster_pasta(int clusterNo);
 
-int writeDataClusterFolder(int clusterNo,struct t2fs_record folder);
+int escrever_cluster_pasta(int clusterNo,struct t2fs_record folder);
 
-int readCluster(int clusterNo, unsigned char* buffer);
+int ler_cluster(int clusterNo, unsigned char* buffer);
 
-unsigned char* readDataCluster (int clusterNo);
+unsigned char* ler_dado_cluster (int clusterNo);
 
-int writeCluster(int clusterNo, unsigned char* buffer, int position, int size);
+int escrever_cluster(int clusterNo, unsigned char* buffer, int position, int size);
 
-int pathToCluster(char* path);
+int caminho_para_cluster(char* path);
 
-int findFATOpenCluster(int* clusterReturn);
+int procurar_cluster(int* clusterReturn);
 
+/* TODO */
 int tokenizePath(char* path, char*** tokenized);
 
-int toAbsolutePath(char * path, char * currPath, char ** output);
 
-int separatePath(char * path, char ** FristStringOutput, char ** SecondStringOutput) ;
+int converter_caminho_absoluto(char * path, char * currPath, char ** output);
 
-int changeDir(char * path);
+int separar_caminho(char * path, char ** FristStringOutput, char ** SecondStringOutput) ;
+
+int mudar_diretorio(char * path);
 
 int mkdir(char * path);
 
-int isEmptyDir(int clusterNo);
+int esta_no_cluser(int clusterNo, char * fileName, BYTE TypeValEntrada);
 
-int deleteDir(char * path);
+int nome_correto(char * name);
 
-int isInCluster(int clusterNo, char * fileName, BYTE TypeValEntrada);
-
-int isRightName(char * name);
-
-int writeZeroClusterFolderByName(int clusterNo, struct t2fs_record folder, char * fileName, BYTE TypeValEntrada);
+int write_zero(int clusterNo, struct t2fs_record folder, char * fileName, BYTE TypeValEntrada);
 
 DIRENT2 searchDirByHandle(DIR2 handle);
 
@@ -67,49 +65,34 @@ DIR2 openDir(char *path);
 
 DIRENT2 setNullDirent();
 
-void printOpenDirectories();
-
-void setCurrentPathToRoot();
-
 int closeDir(DIR2 handle);
 
 int link(char * path, char ** output);
 
-int truncateCluster(int clusterNo, int position);
-
-int truncateFile(FILE2 handle);
-
 FILE2 createFile(char * filename);
 
-int deleteFile(char * filename);
+int deletar_arquivo(char * filename);
 
-int makeAnewHandle();
-
-void printOpenFiles();
+int novo_handle();
 
 FILE2 openFile (char * filename);
 
-int createSoftlink(char *linkname,char *filename);
 
-int readFile (FILE2 handle, char *buffer, int size);
+int ler_arquivo (FILE2 handle, char *buffer, int size);
 
-int moveCursor (FILE2 handle, DWORD offset);
+int escreve_arquivo(FILE2 handle, char * buffer, int size);
 
-int sizeOfFile(int clusterDir, int clusterFile);
+int fechar_arquivo(FILE2 handle);
 
-int writeFile(FILE2 handle, char * buffer, int size);
+int fechar_arquivo_cluster(int clusterToClose);
 
-int closeFile(FILE2 handle);
+int update_tamanho(FILE2 handle,DWORD newFileSize);
 
-int closeFileByFristCluster(int clusterToClose);
+int setar_tamanho(FILE2 handle);
 
-int updateFileSize(FILE2 handle,DWORD newFileSize);
+int tamanho_real (FILE2 handle);
 
-int setRealDealFileSizeOfChaos(FILE2 handle);
-
-int realFileSize (FILE2 handle);
-
-DWORD getTypeVal(char *absolute);
+DWORD get_tipo(char *absolute);
 
 typedef struct diskf {
     FILE2 file;
@@ -134,6 +117,6 @@ typedef struct diskd {
 
 DISK_FILE arquivos_abertos[LIMITES_ABERTOS];
 
-void freeOpenDirectory(DISK_DIR *opendirectory);
+void liberar_diretorio(DISK_DIR *opendirectory);
 
 #endif

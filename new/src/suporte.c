@@ -12,15 +12,15 @@ int disco_iniciado = 0;
 
 DISK_DIR diretorios_abertos[LIMITES_ABERTOS];
 
-DWORD convertToDword(unsigned char* buffer) {
+DWORD converter_para_DWORD(unsigned char* buffer) {
     return (DWORD) ((DWORD)buffer[0] | (DWORD)buffer[1] << 8 |(DWORD)buffer[2] << 16 |(DWORD)buffer[3] << 24 );
 }
 
-WORD convertToWord(unsigned char* buffer) {
+WORD converter_para_WORD(unsigned char* buffer) {
     return (WORD) ((WORD)buffer[0] | (WORD)buffer[1] << 8);
 }
 
-unsigned char* dwordToLtlEnd(DWORD entry) {
+unsigned char* dword_para_endereco(DWORD entry) {
     unsigned char* buffer = malloc(sizeof(unsigned char)*4);
 
     buffer[0] = entry;
@@ -41,14 +41,14 @@ int iniciar_disco() {
         }
 
         memcpy(super_bloco.id, buffer, 4);
-        super_bloco.version = convertToWord(buffer + 4);
-        super_bloco.superblockSize = convertToWord(buffer + 6);
-        super_bloco.DiskSize = convertToDword(buffer + 8);
-        super_bloco.NofSectors = convertToDword(buffer + 12);
-        super_bloco.SectorsPerCluster = convertToDword(buffer + 16);
-        super_bloco.pFATSectorStart = convertToDword(buffer + 20);
-        super_bloco.RootDirCluster = convertToDword(buffer + 24);
-        super_bloco.DataSectorStart = convertToDword(buffer + 28); 
+        super_bloco.version = converter_para_WORD(buffer + 4);
+        super_bloco.superblockSize = converter_para_WORD(buffer + 6);
+        super_bloco.DiskSize = converter_para_DWORD(buffer + 8);
+        super_bloco.NofSectors = converter_para_DWORD(buffer + 12);
+        super_bloco.SectorsPerCluster = converter_para_DWORD(buffer + 16);
+        super_bloco.pFATSectorStart = converter_para_DWORD(buffer + 20);
+        super_bloco.RootDirCluster = converter_para_DWORD(buffer + 24);
+        super_bloco.DataSectorStart = converter_para_DWORD(buffer + 28); 
 
 
         for (i = 0; i < LIMITES_ABERTOS; i++) {
@@ -72,7 +72,7 @@ int iniciar_disco() {
 }
 
 
-int writeInFAT(int clusterNo, DWORD value) {
+int escrever_FAT(int clusterNo, DWORD value) {
     int offset = clusterNo/64;
     unsigned int sector = super_bloco.pFATSectorStart + offset;
     int sectorOffset = (clusterNo % 64)*4;
@@ -85,13 +85,13 @@ int writeInFAT(int clusterNo, DWORD value) {
     }
 
     if (sector >= super_bloco.pFATSectorStart && sector < super_bloco.DataSectorStart) { 
-        readInFAT(clusterNo, &badSectorCheck);
+        ler_FAT(clusterNo, &badSectorCheck);
         if (badSectorCheck == BAD_SECTOR) { 
             return -1;
         }
 
         read_sector(sector,buffer);
-        writeValue = dwordToLtlEnd(value);
+        writeValue = dword_para_endereco(value);
         memcpy(buffer + sectorOffset, writeValue,4);
         write_sector(sector,buffer);
 
@@ -103,7 +103,7 @@ int writeInFAT(int clusterNo, DWORD value) {
     return -1;
 }
 
-int readInFAT(int clusterNo, DWORD* value) {
+int ler_FAT(int clusterNo, DWORD* value) {
     int offset = clusterNo/64;
     unsigned int sector = super_bloco.pFATSectorStart + offset;
     int sectorOffset = (clusterNo % 64)*4;
@@ -111,14 +111,14 @@ int readInFAT(int clusterNo, DWORD* value) {
 
     if (sector >= super_bloco.pFATSectorStart && sector < super_bloco.DataSectorStart) { 
         read_sector(sector,buffer);
-        *value = convertToDword(buffer + sectorOffset);
+        *value = converter_para_DWORD(buffer + sectorOffset);
         return 0;
     }
     return -1;
 }
 
 
-int writeDataClusterFolder(int clusterNo, struct t2fs_record folder) {
+int ler_cluster_pasta(int clusterNo, struct t2fs_record folder) {
     int i;
     int k = 0;
     int written = 0;
@@ -128,15 +128,15 @@ int writeDataClusterFolder(int clusterNo, struct t2fs_record folder) {
     unsigned int sector = super_bloco.DataSectorStart + super_bloco.SectorsPerCluster*clusterNo;
     
     if (sector >= super_bloco.DataSectorStart && sector < super_bloco.NofSectors) {
-        readCluster(clusterNo, buffer);
+        ler_cluster(clusterNo, buffer);
 
         for(i = 0; i < clusterByteSize; i+= sizeof(struct t2fs_record)) {
             if ( ((BYTE) buffer[i]) == 0 && !written ) {
                 memcpy(buffer + i,&(folder.TypeVal),1);
                 memcpy((buffer + i + 1),folder.name,51);
-                memcpy((buffer + i + 52),dwordToLtlEnd(folder.bytesFileSize),4);
-                memcpy((buffer + i + 56),dwordToLtlEnd(folder.clustersFileSize),4);
-                memcpy((buffer + i + 60),dwordToLtlEnd(folder.firstCluster),4);
+                memcpy((buffer + i + 52),dword_para_endereco(folder.bytesFileSize),4);
+                memcpy((buffer + i + 56),dword_para_endereco(folder.clustersFileSize),4);
+                memcpy((buffer + i + 60),dword_para_endereco(folder.firstCluster),4);
                 written = 1;
             } 
         }
@@ -156,7 +156,7 @@ int writeDataClusterFolder(int clusterNo, struct t2fs_record folder) {
     return -1;
 }
 
-int readCluster(int clusterNo, unsigned char* buffer) {
+int ler_cluster(int clusterNo, unsigned char* buffer) {
     int i = 0;
     unsigned int sectorToRead;
     unsigned int sector = super_bloco.DataSectorStart + super_bloco.SectorsPerCluster*clusterNo;
@@ -168,7 +168,7 @@ int readCluster(int clusterNo, unsigned char* buffer) {
     return 0;
 }
 
-struct t2fs_record* readDataClusterFolder(int clusterNo) {
+struct t2fs_record* ler_cluster_pasta(int clusterNo) {
     int j;
     int folderSizeInBytes = sizeof(struct t2fs_record)*( (SECTOR_SIZE*super_bloco.SectorsPerCluster) / sizeof(struct t2fs_record) );
     unsigned int sector = super_bloco.DataSectorStart + super_bloco.SectorsPerCluster*clusterNo;
@@ -176,14 +176,14 @@ struct t2fs_record* readDataClusterFolder(int clusterNo) {
     struct t2fs_record* folderContent = malloc(folderSizeInBytes);
 
     if (sector >= super_bloco.DataSectorStart && sector < super_bloco.NofSectors) {
-        readCluster(clusterNo, buffer);
+        ler_cluster(clusterNo, buffer);
 
         for(j = 0; j < folderSizeInBytes/sizeof(struct t2fs_record); j++) {
             folderContent[j].TypeVal = (BYTE) *(buffer + sizeof(struct t2fs_record)*j);
             memcpy(folderContent[j].name, buffer + 1 + sizeof(struct t2fs_record)*j, 51);
-            folderContent[j].bytesFileSize = convertToDword(buffer + 52 + sizeof(struct t2fs_record)*j);
-            folderContent[j].clustersFileSize = convertToDword(buffer + 56 + sizeof(struct t2fs_record)*j);
-            folderContent[j].firstCluster = convertToDword(buffer + 60 + sizeof(struct t2fs_record)*j);
+            folderContent[j].bytesFileSize = converter_para_DWORD(buffer + 52 + sizeof(struct t2fs_record)*j);
+            folderContent[j].clustersFileSize = converter_para_DWORD(buffer + 56 + sizeof(struct t2fs_record)*j);
+            folderContent[j].firstCluster = converter_para_DWORD(buffer + 60 + sizeof(struct t2fs_record)*j);
         }
         free(buffer);
         return folderContent;
@@ -192,17 +192,17 @@ struct t2fs_record* readDataClusterFolder(int clusterNo) {
     return NULL;
 }
 
-unsigned char* readDataCluster (int clusterNo){
+unsigned char* ler_dado_cluster (int clusterNo){
     unsigned int sector = super_bloco.DataSectorStart + super_bloco.SectorsPerCluster*clusterNo;
     unsigned char* buffer = malloc(sizeof(unsigned char)*SECTOR_SIZE*super_bloco.SectorsPerCluster); 
     if (sector >= super_bloco.DataSectorStart && sector < super_bloco.NofSectors) {
-        readCluster(clusterNo, buffer);
+        ler_cluster(clusterNo, buffer);
         return buffer;
     }
     return NULL;
 }
 
-int writeCluster(int clusterNo, unsigned char* buffer, int position, int size) {
+int escrever_cluster(int clusterNo, unsigned char* buffer, int position, int size) {
     int j;
     int k = 0;
     unsigned int sectorToWrite;
@@ -213,7 +213,7 @@ int writeCluster(int clusterNo, unsigned char* buffer, int position, int size) {
         return -1;
     }
 
-    readCluster(clusterNo, newBuffer);
+    ler_cluster(clusterNo, newBuffer);
 
     for(j = position; j < size + position; j++){
         newBuffer[j] = buffer[j - position];
@@ -227,7 +227,7 @@ int writeCluster(int clusterNo, unsigned char* buffer, int position, int size) {
     return position + size;
 }
 
-int pathToCluster(char* path) {
+int escrever_cluster(char* path) {
     int i;
     int found = 0;
     int pathsNo = 0;
@@ -255,7 +255,7 @@ int pathToCluster(char* path) {
 
     while(pathTok != NULL && pathsNo == found && folderInPath) {
         pathsNo += 1;
-        folderContent = readDataClusterFolder(currentCluster);
+        folderContent = ler_cluster_pasta(currentCluster);
         for(i = 0; i < folderSize; i++) {
             if (strcmp(folderContent[i].name,pathTok) == 0) {
                 currentCluster = folderContent[i].firstCluster;
@@ -287,13 +287,13 @@ int pathToCluster(char* path) {
     return currentCluster;
 }
 
-int findFATOpenCluster(int* clusterReturn) { 
+int procurar_cluster(int* clusterReturn) { 
     int functionReturn = 0;
     int clusterNo = 1;
     DWORD value = BAD_SECTOR;
     while(functionReturn == 0 && value != 0) {
         clusterNo += 1;
-        functionReturn = readInFAT(clusterNo,&value);
+        functionReturn = ler_FAT(clusterNo,&value);
     }
     if(functionReturn == -1) {
         *clusterReturn = -1;
@@ -338,7 +338,7 @@ int tokenizePath(char* path, char*** tokenized) {
 
 }
 
-int toAbsolutePath(char * path, char * currPath, char ** output) {
+int converter_caminho_absoluto(char * path, char * currPath, char ** output) {
     int i;
     int numTokens;
     char ** tokenizedPath;
@@ -387,7 +387,7 @@ int toAbsolutePath(char * path, char * currPath, char ** output) {
     return 0;
 
 }
-int separatePath(char * path, char ** FristStringOutput, char ** SecondStringOutput) {
+int separar_caminho(char * path, char ** FristStringOutput, char ** SecondStringOutput) {
     const char dir_div = '/';
     int lenghtAux;
     int lenghtPath = strlen(path);
@@ -412,10 +412,10 @@ int mkdir(char * path){
     char * secondOut;
     int firstClusterFreeInFAT;
     int clusterDotDot;
-    toAbsolutePath(path, caminho_atual.absolute, &absolute);
-    separatePath(absolute, &firstOut, &secondOut);
+    converter_caminho_absoluto(path, caminho_atual.absolute, &absolute);
+    separar_caminho(absolute, &firstOut, &secondOut);
 
-    if(findFATOpenCluster(&firstClusterFreeInFAT) == -1){
+    if(procurar_cluster(&firstClusterFreeInFAT) == -1){
         free(absolute);
         free(firstOut);
         free(secondOut);
@@ -427,7 +427,7 @@ int mkdir(char * path){
         free(secondOut);
         return -1;
     }
-    if(!(isRightName(secondOut))){
+    if(!(esta_no_cluser(secondOut))){
         free(absolute);
         free(firstOut);
         free(secondOut);
@@ -437,7 +437,7 @@ int mkdir(char * path){
         clusterDotDot = super_bloco.RootDirCluster;
     }
     else{
-        clusterDotDot = pathToCluster(firstOut);
+        clusterDotDot = escrever_cluster(firstOut);
             if(clusterDotDot == -1){
                 free(absolute);
                 free(firstOut);
@@ -446,7 +446,7 @@ int mkdir(char * path){
             }
         }
 
-    if(isInCluster(clusterDotDot, secondOut, TYPEVAL_DIRETORIO)){
+    if(esta_no_cluser(clusterDotDot, secondOut, TYPEVAL_DIRETORIO)){
         free(absolute);
         free(firstOut);
         free(secondOut);
@@ -463,7 +463,7 @@ int mkdir(char * path){
     one_dot.bytesFileSize = SECTOR_SIZE*super_bloco.SectorsPerCluster;
     one_dot.clustersFileSize = 1;
     one_dot.firstCluster = firstClusterFreeInFAT;
-    writeDataClusterFolder(firstClusterFreeInFAT, one_dot);
+    ler_cluster_pasta(firstClusterFreeInFAT, one_dot);
 
 
     two_dot.TypeVal = TYPEVAL_DIRETORIO;
@@ -471,7 +471,7 @@ int mkdir(char * path){
     two_dot.bytesFileSize = SECTOR_SIZE*super_bloco.SectorsPerCluster;
     two_dot.clustersFileSize = 1;
     two_dot.firstCluster = clusterDotDot;
-    writeDataClusterFolder(firstClusterFreeInFAT, two_dot);
+    ler_cluster_pasta(firstClusterFreeInFAT, two_dot);
 
 
     folder.TypeVal = TYPEVAL_DIRETORIO;
@@ -479,11 +479,11 @@ int mkdir(char * path){
     folder.bytesFileSize = SECTOR_SIZE*super_bloco.SectorsPerCluster;;
     folder.clustersFileSize = 1;
     folder.firstCluster = firstClusterFreeInFAT;
-    if(writeDataClusterFolder(clusterDotDot, folder) == -1){
+    if(ler_cluster_pasta(clusterDotDot, folder) == -1){
         return -1;
     }
 
-    writeInFAT(firstClusterFreeInFAT, END_OF_FILE);
+    escrever_FAT(firstClusterFreeInFAT, END_OF_FILE);
 
     free(absolute);
     free(firstOut);
@@ -491,7 +491,7 @@ int mkdir(char * path){
 
     return 0;
 }
-int writeZeroClusterFolderByName(int clusterNo, struct t2fs_record folder, char * fileName, BYTE TypeValEntrada) {
+int write_zero(int clusterNo, struct t2fs_record folder, char * fileName, BYTE TypeValEntrada) {
     int i;
     int k = 0;
     int written = 0;
@@ -501,14 +501,14 @@ int writeZeroClusterFolderByName(int clusterNo, struct t2fs_record folder, char 
     unsigned int sector = super_bloco.DataSectorStart + super_bloco.SectorsPerCluster*clusterNo;
     
     if (sector >= super_bloco.DataSectorStart && sector < super_bloco.NofSectors) {
-        readCluster(clusterNo, buffer);
+        ler_cluster(clusterNo, buffer);
         for(i = 0; i < clusterByteSize; i+= sizeof(struct t2fs_record)) {
             if ( (strcmp((char *)buffer+i+1, fileName) == 0) && (((BYTE) buffer[i]) == TypeValEntrada) && !written ) {
                 memcpy(buffer + i,&(folder.TypeVal),1);
                 memcpy((buffer + i + 1),folder.name,51);
-                memcpy((buffer + i + 52),dwordToLtlEnd(folder.bytesFileSize),4);
-                memcpy((buffer + i + 56),dwordToLtlEnd(folder.clustersFileSize),4);
-                memcpy((buffer + i + 60),dwordToLtlEnd(folder.firstCluster),4);
+                memcpy((buffer + i + 52),dword_para_endereco(folder.bytesFileSize),4);
+                memcpy((buffer + i + 56),dword_para_endereco(folder.clustersFileSize),4);
+                memcpy((buffer + i + 60),dword_para_endereco(folder.firstCluster),4);
                 written = 1;
             } 
         }
@@ -528,7 +528,7 @@ int writeZeroClusterFolderByName(int clusterNo, struct t2fs_record folder, char 
     return -1;
 }
 
-int isInCluster(int clusterNo, char * fileName, BYTE TypeValEntrada) {
+int esta_no_cluser(int clusterNo, char * fileName, BYTE TypeValEntrada) {
     int i;
     int wasFound = 0;
     int clusterByteSize = sizeof(unsigned char)*SECTOR_SIZE*super_bloco.SectorsPerCluster;
@@ -536,7 +536,7 @@ int isInCluster(int clusterNo, char * fileName, BYTE TypeValEntrada) {
     unsigned int sector = super_bloco.DataSectorStart + super_bloco.SectorsPerCluster*clusterNo;
     
     if (sector >= super_bloco.DataSectorStart && sector < super_bloco.NofSectors) {
-        readCluster(clusterNo, buffer);
+        ler_cluster(clusterNo, buffer);
 
         for(i = 0; i < clusterByteSize; i+= sizeof(struct t2fs_record)) {
             if ( (strcmp((char *)buffer+i+1, fileName) == 0) && (((BYTE) buffer[i]) == TypeValEntrada) && !wasFound ) {
@@ -554,7 +554,7 @@ int isInCluster(int clusterNo, char * fileName, BYTE TypeValEntrada) {
     return 0;
 }
 
-int isRightName(char * name){
+int esta_no_cluser(char * name){
     if(strcmp(name, ".") == 0){
         return 0;
     }
@@ -577,7 +577,7 @@ DIRENT2 setNullDirent(){
     return dir;
 }
 
-DWORD getTypeVal(char *absolute){
+DWORD get_tipo(char *absolute){
 
     char *firstOut;
     char *secondOut;
@@ -586,10 +586,10 @@ DWORD getTypeVal(char *absolute){
     int i;
     int clusterDir;
 
-    separatePath(absolute, &firstOut, &secondOut);
+    separar_caminho(absolute, &firstOut, &secondOut);
 
-    clusterDir=pathToCluster(firstOut);
-    folderContent=readDataClusterFolder(clusterDir);
+    clusterDir=escrever_cluster(firstOut);
+    folderContent=ler_cluster_pasta(clusterDir);
     for(i=0;i<folderSize;i++){
         if(strcmp(folderContent[i].name,secondOut) ==0 ){
             return folderContent[i].TypeVal;
@@ -614,19 +614,19 @@ DIR2 openDir(char *path){
         if(retornoLink < 0){
             return -4;
         }else if(retornoLink ==1){
-            if(toAbsolutePath(linkOutput, caminho_atual.absolute, &absolute)){
+            if(converter_caminho_absoluto(linkOutput, caminho_atual.absolute, &absolute)){
             return -1;
             } 
         }else{
-            if(toAbsolutePath(path, caminho_atual.absolute, &absolute) == -1)
+            if(converter_caminho_absoluto(path, caminho_atual.absolute, &absolute) == -1)
             return -2;
         }
-        if(getTypeVal(absolute) != TYPEVAL_DIRETORIO){
+        if(get_tipo(absolute) != TYPEVAL_DIRETORIO){
             return -5;
         }
     }
     
-     dirCluster=pathToCluster(absolute);
+     dirCluster=escrever_cluster(absolute);
     for(i=0; i<LIMITES_ABERTOS ;i++){
         if(diretorios_abertos[i].handle == -1){
             diretorios_abertos[i].handle = i;
@@ -643,7 +643,7 @@ DIR2 openDir(char *path){
     return -1;
 }
 
-void freeOpenDirectory(DISK_DIR *opendirectory){
+void liberar_diretorio(DISK_DIR *opendirectory){
     opendirectory->handle=-1;
     opendirectory->noReads=-1;
     opendirectory->clusterDir=-1;
@@ -655,7 +655,7 @@ int closeDir(DIR2 handle){
 
     for(i=0;i< LIMITES_ABERTOS ;i++){
         if(diretorios_abertos[i].handle==handle){
-            freeOpenDirectory(&diretorios_abertos[diretorios_abertos[i].handle]);
+            liberar_diretorio(&diretorios_abertos[diretorios_abertos[i].handle]);
             return 0;
         }
     }
@@ -668,7 +668,7 @@ FILE2 createFile(char * filename){
     char * secondOut;
     int firstClusterFreeInFAT;
     int handle;
-    handle = makeAnewHandle();
+    handle = novo_handle();
     int clusterToRecordFile;
     char *linkOutput;
     
@@ -676,19 +676,19 @@ FILE2 createFile(char * filename){
     if(link(filename, &linkOutput)== -1)
         return -1; 
 
-    if(toAbsolutePath(linkOutput, caminho_atual.absolute, &absolute)){       
+    if(converter_caminho_absoluto(linkOutput, caminho_atual.absolute, &absolute)){       
         return -1;
     }
 
-    if(separatePath(absolute, &firstOut, &secondOut)){        
+    if(separar_caminho(absolute, &firstOut, &secondOut)){        
         return -1;
     }
 
-    if(!isRightName(secondOut)){
+    if(!esta_no_cluser(secondOut)){
         return -1;
     }  
 
-    clusterToRecordFile = pathToCluster(firstOut);    
+    clusterToRecordFile = escrever_cluster(firstOut);    
     if(clusterToRecordFile == -1){
         return -1;
     }
@@ -701,7 +701,7 @@ FILE2 createFile(char * filename){
         return -1;
     }
     
-    if(!(isRightName(secondOut))){
+    if(!(esta_no_cluser(secondOut))){
         free(absolute);
         free(firstOut);
         free(secondOut);
@@ -715,11 +715,11 @@ FILE2 createFile(char * filename){
         return -1; 
     }
 
-    if(isInCluster(clusterToRecordFile, secondOut, TYPEVAL_REGULAR)){
-        deleteFile(filename);
+    if(esta_no_cluser(clusterToRecordFile, secondOut, TYPEVAL_REGULAR)){
+        deletar_arquivo(filename);
     }
    
-    if(findFATOpenCluster(&firstClusterFreeInFAT) == -1){
+    if(procurar_cluster(&firstClusterFreeInFAT) == -1){
         free(absolute);
         free(firstOut);
         free(secondOut);
@@ -736,15 +736,15 @@ FILE2 createFile(char * filename){
     toRecord.firstCluster = firstClusterFreeInFAT;
 
    
-    if(writeDataClusterFolder(clusterToRecordFile, toRecord) == - 1){
+    if(ler_cluster_pasta(clusterToRecordFile, toRecord) == - 1){
         return -1;
     }    
-    writeInFAT(firstClusterFreeInFAT, END_OF_FILE);
+    escrever_FAT(firstClusterFreeInFAT, END_OF_FILE);
     
     return (openFile (filename));
 }
 
-int makeAnewHandle(){
+int novo_handle(){
     int i;
     
     for(i = 0; i < MAX_NUM_FILES; i++){
@@ -760,7 +760,7 @@ FILE2 openFile (char * filename){
     char * firstOut;
     char * secondOut;    
     int handle;
-    handle = makeAnewHandle();
+    handle = novo_handle();
     int firstClusterOfFile;
     char *linkOutput;
 
@@ -773,20 +773,20 @@ FILE2 openFile (char * filename){
     if(link(filename, &linkOutput)== -1)
             return -1; 
 
-    if(toAbsolutePath(linkOutput, caminho_atual.absolute, &absolute)){        
+    if(converter_caminho_absoluto(linkOutput, caminho_atual.absolute, &absolute)){        
         return -2;
     }
 
-    if(separatePath(absolute, &firstOut, &secondOut)){        
+    if(separar_caminho(absolute, &firstOut, &secondOut)){        
         return -2;
     }
 
-    if(!isRightName(secondOut)){ 
+    if(!esta_no_cluser(secondOut)){ 
         return -1;
     }    
-    clusterOfDir = pathToCluster(firstOut);
+    clusterOfDir = escrever_cluster(firstOut);
 
-    readCluster(clusterOfDir, buffer);
+    ler_cluster(clusterOfDir, buffer);
     if(strlen(secondOut) > 0){
         for(i = 0; i < clusterByteSize; i+= sizeof(struct t2fs_record)) {
             if ( (strcmp((char *)buffer+i+1, secondOut) == 0) && (((BYTE) buffer[i]) == TYPEVAL_REGULAR) && !isFile ) {
@@ -797,7 +797,7 @@ FILE2 openFile (char * filename){
             return -3;
         }
     }
-    firstClusterOfFile = pathToCluster(absolute);    
+    firstClusterOfFile = escrever_cluster(absolute);    
     if(firstClusterOfFile == -1){
         return -4;
     }
@@ -812,13 +812,13 @@ FILE2 openFile (char * filename){
     newFileToRecord.clusterNo = firstClusterOfFile;
     newFileToRecord.currPointer = 0;
     newFileToRecord.file = handle;    
-    newFileToRecord.clusterDir=pathToCluster(firstOut);
+    newFileToRecord.clusterDir=escrever_cluster(firstOut);
     memcpy(&arquivos_abertos[handle-1], &newFileToRecord, sizeof(struct diskf));
     
     return newFileToRecord.file;
 }
 
-int closeFile(FILE2 handle){
+int fechar_arquivo(FILE2 handle){
     int i;
     for(i = 0; i < MAX_NUM_FILES; i++){
         if(arquivos_abertos[i].file == handle){
@@ -831,7 +831,7 @@ int closeFile(FILE2 handle){
     return -1;
 }
 
-int deleteFile(char * filename){
+int deletar_arquivo(char * filename){
     char * absolute;
     char * firstOut;
     char * secondOut;
@@ -855,38 +855,38 @@ int deleteFile(char * filename){
 
     memset(bufferWithNulls,'\0',SECTOR_SIZE*super_bloco.SectorsPerCluster);
 
-    if(toAbsolutePath(filename, caminho_atual.absolute, &absolute)){        
+    if(converter_caminho_absoluto(filename, caminho_atual.absolute, &absolute)){        
         free(absolute);
         free(firstOut);
         free(secondOut);
         return -1;
     }
 
-    if(separatePath(absolute, &firstOut, &secondOut)){
+    if(separar_caminho(absolute, &firstOut, &secondOut)){
         free(absolute);
         free(firstOut);
         free(secondOut);
         return -1;
     }
 
-    if(!isRightName(secondOut)){
+    if(!esta_no_cluser(secondOut)){
         return -1;
     }  
 
-    if((clusterOfDir = pathToCluster(firstOut)) == -1){
+    if((clusterOfDir = escrever_cluster(firstOut)) == -1){
         free(absolute);
         free(firstOut);
         free(secondOut);
          return -1;
     }
 
-    if((clusterToDelete = pathToCluster(absolute))== -1){
+    if((clusterToDelete = escrever_cluster(absolute))== -1){
         free(absolute);
         free(firstOut);
         free(secondOut);
         return -1;
     }
-    readCluster(clusterOfDir, buffer);
+    ler_cluster(clusterOfDir, buffer);
     for(i = 0; i < clusterByteSize; i+= sizeof(struct t2fs_record)) {
         if ( (strcmp((char *)buffer+i+1, secondOut) == 0) && (((BYTE) buffer[i]) == typeToDelete) && !isFile ) {
             isFile = 1;
@@ -906,21 +906,21 @@ int deleteFile(char * filename){
     folderContent.clustersFileSize = 0;
     folderContent.firstCluster = 0;
 
-    if(writeZeroClusterFolderByName(clusterOfDir, folderContent, secondOut, typeToDelete) == -1){
+    if(write_zero(clusterOfDir, folderContent, secondOut, typeToDelete) == -1){
         free(absolute);
         free(firstOut);
         free(secondOut);
         return -1;
     }
 
-    closeFileByFristCluster(clusterToDelete);
+    fechar_arquivo_cluster(clusterToDelete);
 
     while( FATrepresentation != END_OF_FILE && FATrepresentation != BAD_SECTOR){
 
-        readInFAT(clusterToDelete,&FATrepresentation);
-        writeInFAT(clusterToDelete, 0);
+        ler_FAT(clusterToDelete,&FATrepresentation);
+        escrever_FAT(clusterToDelete, 0);
         
-        writeCluster(clusterToDelete,bufferWithNulls,0,SECTOR_SIZE*super_bloco.SectorsPerCluster);
+        escrever_cluster(clusterToDelete,bufferWithNulls,0,SECTOR_SIZE*super_bloco.SectorsPerCluster);
         
         if(FATrepresentation != END_OF_FILE && FATrepresentation != BAD_SECTOR){
             clusterToDelete = (int) FATrepresentation;
@@ -933,7 +933,7 @@ int deleteFile(char * filename){
     return 0;
 }
 
-int closeFileByFristCluster(int clusterToClose){
+int fechar_arquivo_cluster(int clusterToClose){
     int i;
     for(i = 0; i < MAX_NUM_FILES; i++){
         if(arquivos_abertos[i].clusterNo == clusterToClose){
@@ -958,10 +958,10 @@ int link(char * path, char ** output) {
     int linkClusterNo;
 
 
-    toAbsolutePath(path, caminho_atual.absolute, &absolute);    
-    separatePath(absolute, &pathToFile, &fileName);
+    converter_caminho_absoluto(path, caminho_atual.absolute, &absolute);    
+    separar_caminho(absolute, &pathToFile, &fileName);
 
-    pathClusterNo = pathToCluster(pathToFile);
+    pathClusterNo = escrever_cluster(pathToFile);
 
     if(pathClusterNo == -1) {
         free(buffer);
@@ -971,7 +971,7 @@ int link(char * path, char ** output) {
         return -1;
     }
 
-    readCluster(pathClusterNo, buffer);
+    ler_cluster(pathClusterNo, buffer);
 
    
     for(i = 0; i < clusterByteSize; i+= sizeof(struct t2fs_record)) {        
@@ -990,11 +990,11 @@ int link(char * path, char ** output) {
         return 0;
     }
     
-    linkClusterNo = pathToCluster(path);
+    linkClusterNo = escrever_cluster(path);
 
     memset(buffer,0,clusterByteSize);
 
-    readCluster(linkClusterNo,buffer);
+    ler_cluster(linkClusterNo,buffer);
 
     *output = malloc(sizeof(char)*(strlen((char*)buffer)+1));
     strcpy(*output,(char*)buffer);
@@ -1006,7 +1006,7 @@ int link(char * path, char ** output) {
     return 1;
 }
 
-int writeFile(FILE2 handle, char * buffer, int size) {
+int escreve_arquivo(FILE2 handle, char * buffer, int size) {
     int i = 0;
     int fileNo;
     int found = 0;
@@ -1037,7 +1037,7 @@ int writeFile(FILE2 handle, char * buffer, int size) {
     currentCluster = nextCluster;
     
     while(currentPointerInCluster >= clusterSize) {
-        if(readInFAT(nextCluster,&value) != 0) {
+        if(ler_FAT(nextCluster,&value) != 0) {
             return -1;
         }
         nextCluster = (int)value;
@@ -1048,17 +1048,17 @@ int writeFile(FILE2 handle, char * buffer, int size) {
     }
 
     if((remainingSize + currentPointerInCluster) <= (clusterSize)){
-        writeCluster(currentCluster,(unsigned char*)(buffer),currentPointerInCluster,size);
+        escrever_cluster(currentCluster,(unsigned char*)(buffer),currentPointerInCluster,size);
         bytesWritten += size;
         remainingSize -= size;
     } else {
-        writeCluster(currentCluster,(unsigned char*)(buffer),currentPointerInCluster,(clusterSize - currentPointerInCluster));
+        escrever_cluster(currentCluster,(unsigned char*)(buffer),currentPointerInCluster,(clusterSize - currentPointerInCluster));
         remainingSize -= (clusterSize - currentPointerInCluster);
         bytesWritten += (clusterSize - currentPointerInCluster);
     }
 
     while((DWORD)nextCluster != END_OF_FILE && remainingSize > 0) {
-        if(readInFAT(nextCluster,&value) != 0) {
+        if(ler_FAT(nextCluster,&value) != 0) {
             return -1;
         }
         nextCluster = (int)value;
@@ -1066,11 +1066,11 @@ int writeFile(FILE2 handle, char * buffer, int size) {
             currentCluster = nextCluster;
 
             if(remainingSize <= (clusterSize)){
-                writeCluster(currentCluster,(unsigned char*)(buffer + bytesWritten),0,remainingSize);
+                escrever_cluster(currentCluster,(unsigned char*)(buffer + bytesWritten),0,remainingSize);
                 bytesWritten += remainingSize;
                 remainingSize -= remainingSize;
             } else {
-                writeCluster(currentCluster,(unsigned char*)(buffer + bytesWritten),0,(clusterSize));
+                escrever_cluster(currentCluster,(unsigned char*)(buffer + bytesWritten),0,(clusterSize));
                 remainingSize -= (clusterSize);
                 bytesWritten += (clusterSize);
             }
@@ -1078,21 +1078,21 @@ int writeFile(FILE2 handle, char * buffer, int size) {
     }
     while(remainingSize > 0) {
         if(remainingSize <= (clusterSize)){
-            if(findFATOpenCluster(&nextCluster) != 0) {
+            if(procurar_cluster(&nextCluster) != 0) {
                 return -1;
             }
-            writeInFAT(currentCluster,nextCluster);
-            writeInFAT(nextCluster,END_OF_FILE);
-            writeCluster(nextCluster,(unsigned char*)(buffer + bytesWritten),0,remainingSize);
+            escrever_FAT(currentCluster,nextCluster);
+            escrever_FAT(nextCluster,END_OF_FILE);
+            escrever_cluster(nextCluster,(unsigned char*)(buffer + bytesWritten),0,remainingSize);
             bytesWritten += remainingSize;
             remainingSize -= remainingSize;
         } else {
-            if(findFATOpenCluster(&nextCluster) != 0) {
+            if(procurar_cluster(&nextCluster) != 0) {
                 return -1;
             }
-            writeInFAT(currentCluster,nextCluster);
-            writeInFAT(nextCluster,END_OF_FILE);
-            writeCluster(nextCluster,(unsigned char*)(buffer + bytesWritten),0,(clusterSize));
+            escrever_FAT(currentCluster,nextCluster);
+            escrever_FAT(nextCluster,END_OF_FILE);
+            escrever_cluster(nextCluster,(unsigned char*)(buffer + bytesWritten),0,(clusterSize));
             currentCluster = nextCluster;
             remainingSize -= (clusterSize);
             bytesWritten += (clusterSize);
@@ -1101,14 +1101,14 @@ int writeFile(FILE2 handle, char * buffer, int size) {
 
     arquivos_abertos[fileNo].currPointer += bytesWritten; 
 
-    if(setRealDealFileSizeOfChaos(handle) != 0)
+    if(setar_tamanho(handle) != 0)
         return -2;
 
     
     return bytesWritten;
 }
 
-int readFile (FILE2 handle, char *buffer, int size){
+int ler_arquivo (FILE2 handle, char *buffer, int size){
 
     int found=0;
     int currentPointerInCluster;
@@ -1134,7 +1134,7 @@ int readFile (FILE2 handle, char *buffer, int size){
 
     currentPointerInCluster = arquivos_abertos[fileNo].currPointer;
     currentCluster = arquivos_abertos[fileNo].clusterNo;
-    prebuffer=readDataCluster(currentCluster);
+    prebuffer=ler_dado_cluster(currentCluster);
 
     while((DWORD)currentCluster != END_OF_FILE && i<size && (DWORD)currentCluster != BAD_SECTOR){
         
@@ -1148,13 +1148,13 @@ int readFile (FILE2 handle, char *buffer, int size){
         }
          
         if(i<size || i>=clusterCount*SECTOR_SIZE*super_bloco.SectorsPerCluster){
-            if(readInFAT(currentCluster,&value) != 0) {
+            if(ler_FAT(currentCluster,&value) != 0) {
                 return -2;
             }else{
                     nextCluster = (int)value;
                     free(prebuffer);
                     prebuffer=malloc(sizeof(unsigned char)*SECTOR_SIZE*super_bloco.SectorsPerCluster+1);
-                    prebuffer=readDataCluster(nextCluster);
+                    prebuffer=ler_dado_cluster(nextCluster);
                     currentPointerInCluster=0;
                     currentCluster = nextCluster;
             }
@@ -1168,7 +1168,7 @@ int readFile (FILE2 handle, char *buffer, int size){
     return i;
 }
 
-int realFileSize (FILE2 handle){ 
+int setar_tamanho (FILE2 handle){ 
 
     int found=0;
     int currentPointerInCluster;
@@ -1192,7 +1192,7 @@ int realFileSize (FILE2 handle){
     }
     currentPointerInCluster = 0;
     currentCluster = arquivos_abertos[fileNo].clusterNo;
-    prebuffer=readDataCluster(currentCluster);
+    prebuffer=ler_dado_cluster(currentCluster);
 
     while((DWORD)currentCluster != END_OF_FILE && (DWORD)currentCluster != BAD_SECTOR){
 
@@ -1200,14 +1200,14 @@ int realFileSize (FILE2 handle){
             currentPointerInCluster++;
             i++;
         }
-        if(readInFAT(currentCluster,&value) != 0) {
+        if(ler_FAT(currentCluster,&value) != 0) {
             return -2;
         }
         nextCluster = (int)value;
         free(prebuffer);
         prebuffer=malloc(sizeof(unsigned char)*SECTOR_SIZE*super_bloco.SectorsPerCluster);
         if((DWORD)nextCluster != END_OF_FILE){
-            prebuffer=readDataCluster(nextCluster);
+            prebuffer=ler_dado_cluster(nextCluster);
         }
         currentPointerInCluster=0;
         currentCluster = nextCluster;
@@ -1219,22 +1219,22 @@ int realFileSize (FILE2 handle){
     return i;
 }
 
-int setRealDealFileSizeOfChaos(FILE2 handle){
+int setar_tamanho(FILE2 handle){
 
     int filesize;
-    filesize=realFileSize(handle);
+    filesize=setar_tamanho(handle);
     if(filesize <0)
     {
         return -2;
     }
-    if(updateFileSize(handle,(DWORD)filesize) != 0){
+    if(update_tamanho(handle,(DWORD)filesize) != 0){
         return -3;
     }
 
     return 0;
 }
 
-int updateFileSize(FILE2 handle,DWORD newFileSize){
+int update_tamanho(FILE2 handle,DWORD newFileSize){
     int found=0;
     int fileNo;
     int j;
@@ -1255,7 +1255,7 @@ int updateFileSize(FILE2 handle,DWORD newFileSize){
     if(found==0){
         return -1;
     }
-    folderContent=readDataClusterFolder(arquivos_abertos[fileNo].clusterDir);
+    folderContent=ler_cluster_pasta(arquivos_abertos[fileNo].clusterDir);
     for(i=0;i<folderSize && foundinfolder ==0;i++){
 
         if(folderContent[i].firstCluster == arquivos_abertos[fileNo].clusterNo){
@@ -1274,10 +1274,10 @@ int updateFileSize(FILE2 handle,DWORD newFileSize){
 
     memcpy(buffer,&(newStruct.TypeVal),1);
     memcpy((buffer + 1),newStruct.name,51);
-    memcpy((buffer + 52),dwordToLtlEnd(newStruct.bytesFileSize),4);
-    memcpy((buffer + 56),dwordToLtlEnd(newStruct.clustersFileSize),4);
-    memcpy((buffer + 60),dwordToLtlEnd(newStruct.firstCluster),4);
-    writeCluster(arquivos_abertos[fileNo].clusterDir,buffer,count,sizeof(struct t2fs_record));
+    memcpy((buffer + 52),dword_para_endereco(newStruct.bytesFileSize),4);
+    memcpy((buffer + 56),dword_para_endereco(newStruct.clustersFileSize),4);
+    memcpy((buffer + 60),dword_para_endereco(newStruct.firstCluster),4);
+    escrever_cluster(arquivos_abertos[fileNo].clusterDir,buffer,count,sizeof(struct t2fs_record));
 
 return 0;      
 }
