@@ -227,7 +227,7 @@ int escrever_cluster(int clusterNo, unsigned char* buffer, int position, int siz
     return position + size;
 }
 
-int escrever_cluster(char* path) {
+int caminho_para_cluster(char* path) {
     int i;
     int found = 0;
     int pathsNo = 0;
@@ -437,7 +437,7 @@ int mkdir(char * path){
         clusterDotDot = super_bloco.RootDirCluster;
     }
     else{
-        clusterDotDot = escrever_cluster(firstOut);
+        clusterDotDot = caminho_para_cluster(firstOut);
             if(clusterDotDot == -1){
                 free(absolute);
                 free(firstOut);
@@ -588,7 +588,7 @@ DWORD get_tipo(char *absolute){
 
     separar_caminho(absolute, &firstOut, &secondOut);
 
-    clusterDir=escrever_cluster(firstOut);
+    clusterDir=caminho_para_cluster(firstOut);
     folderContent=ler_cluster_pasta(clusterDir);
     for(i=0;i<folderSize;i++){
         if(strcmp(folderContent[i].name,secondOut) ==0 ){
@@ -626,7 +626,7 @@ DIR2 openDir(char *path){
         }
     }
     
-     dirCluster=escrever_cluster(absolute);
+     dirCluster=caminho_para_cluster(absolute);
     for(i=0; i<LIMITES_ABERTOS ;i++){
         if(diretorios_abertos[i].handle == -1){
             diretorios_abertos[i].handle = i;
@@ -688,7 +688,7 @@ FILE2 createFile(char * filename){
         return -1;
     }  
 
-    clusterToRecordFile = escrever_cluster(firstOut);    
+    clusterToRecordFile = caminho_para_cluster(firstOut);    
     if(clusterToRecordFile == -1){
         return -1;
     }
@@ -784,7 +784,7 @@ FILE2 openFile (char * filename){
     if(!esta_no_cluser(secondOut)){ 
         return -1;
     }    
-    clusterOfDir = escrever_cluster(firstOut);
+    clusterOfDir = caminho_para_cluster(firstOut);
 
     ler_cluster(clusterOfDir, buffer);
     if(strlen(secondOut) > 0){
@@ -797,7 +797,7 @@ FILE2 openFile (char * filename){
             return -3;
         }
     }
-    firstClusterOfFile = escrever_cluster(absolute);    
+    firstClusterOfFile = caminho_para_cluster(absolute);    
     if(firstClusterOfFile == -1){
         return -4;
     }
@@ -812,7 +812,7 @@ FILE2 openFile (char * filename){
     newFileToRecord.clusterNo = firstClusterOfFile;
     newFileToRecord.currPointer = 0;
     newFileToRecord.file = handle;    
-    newFileToRecord.clusterDir=escrever_cluster(firstOut);
+    newFileToRecord.clusterDir=caminho_para_cluster(firstOut);
     memcpy(&arquivos_abertos[handle-1], &newFileToRecord, sizeof(struct diskf));
     
     return newFileToRecord.file;
@@ -873,14 +873,14 @@ int deletar_arquivo(char * filename){
         return -1;
     }  
 
-    if((clusterOfDir = escrever_cluster(firstOut)) == -1){
+    if((clusterOfDir = caminho_para_cluster(firstOut)) == -1){
         free(absolute);
         free(firstOut);
         free(secondOut);
          return -1;
     }
 
-    if((clusterToDelete = escrever_cluster(absolute))== -1){
+    if((clusterToDelete = caminho_para_cluster(absolute))== -1){
         free(absolute);
         free(firstOut);
         free(secondOut);
@@ -961,7 +961,7 @@ int link(char * path, char ** output) {
     converter_caminho_absoluto(path, caminho_atual.absolute, &absolute);    
     separar_caminho(absolute, &pathToFile, &fileName);
 
-    pathClusterNo = escrever_cluster(pathToFile);
+    pathClusterNo = caminho_para_cluster(pathToFile);
 
     if(pathClusterNo == -1) {
         free(buffer);
@@ -990,7 +990,7 @@ int link(char * path, char ** output) {
         return 0;
     }
     
-    linkClusterNo = escrever_cluster(path);
+    linkClusterNo = caminho_para_cluster(path);
 
     memset(buffer,0,clusterByteSize);
 
