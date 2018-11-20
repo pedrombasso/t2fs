@@ -336,22 +336,22 @@ int tokenizePath(char* caminho, char*** tokenized) {
 
 }
 
-int converter_caminho_absoluto(char * path, char * currPath, char ** output) {
+int converter_caminho_absoluto(char * caminho, char * caminho_atual, char ** saida) {
     int i;
     int numTokens;
     char ** tokenizedPath;
     char * cutToken;
-    int bufferSize = (strlen(path) + 1 + strlen(currPath) + 1);
+    int bufferSize = (strlen(caminho) + 1 + strlen(caminho_atual) + 1);
     char * buffer = malloc(sizeof(char)*bufferSize);
-    char * pathcpy = malloc(sizeof(char)*(strlen(path) + 1));
+    char * pathcpy = malloc(sizeof(char)*(strlen(caminho) + 1));
 
-    strcpy(pathcpy,path);
+    strcpy(pathcpy,caminho);
 
 
     if(pathcpy[0] == '/'){
         buffer[0] = '\0';
     } else {
-        strcpy(buffer,currPath);
+        strcpy(buffer,caminho_atual);
     }
 
     numTokens = tokenizePath(pathcpy, &tokenizedPath);
@@ -375,9 +375,9 @@ int converter_caminho_absoluto(char * path, char * currPath, char ** output) {
         }
     }
 
-    *output = malloc(sizeof(char)*(strlen(buffer)+ 1));
+    *saida = malloc(sizeof(char)*(strlen(buffer)+ 1));
 
-    strcpy(*output, buffer);
+    strcpy(*saida, buffer);
 
     free(buffer);
     free(pathcpy);
