@@ -1543,6 +1543,7 @@ int readFile (FILE2 handle, char *buffer, int size){ //IN PROGRESS
     openFiles[fileNo].currPointer +=i;
     return i;
 }
+
 int realFileSize (FILE2 handle){ //IN PROGRESS
 
     int found=0;

@@ -9,7 +9,6 @@
 
 int disco_iniciado = 0;
 
-
 DISK_DIR diretorios_abertos[LIMITES_ABERTOS];
 
 DWORD converter_para_DWORD(unsigned char* buffer) {

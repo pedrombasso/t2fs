@@ -22,7 +22,7 @@ void printDataSector(int clusterNo) {
     int j;
     int clusterByteSize = sizeof(unsigned char)*SECTOR_SIZE*super_bloco.SectorsPerCluster;
     unsigned char* buffer = malloc(clusterByteSize);
-    readCluster(clusterNo, buffer);
+    ler_cluster(clusterNo, buffer);
     printf("\n");
     for (j = 0; j < 1024; j++){
         printf("%x ",buffer[j]);
@@ -57,7 +57,7 @@ void printFolders(int clusterNo) {
 }
 int main() {
     iniciar_disco();
-    printFolders(currentPath.clusterNo);
+    printFolders(caminho_atual.clusterNo);
     printFAT(0);
     printf("\nDataCluster ANTES DA DELECAO 4:\n");
     printDataCluster(4);
@@ -67,7 +67,7 @@ int main() {
     if(delete2("./file2.txt") == -1){
         printf("ERROR NA DELECAO DO FILE2.TXT");
     }
-    printFolders(currentPath.clusterNo);
+    printFolders(caminho_atual.clusterNo);
     printf("\nDataCluster 4 depois da delecao:\n");
     printDataCluster(4);
     printf("\n");
@@ -80,7 +80,7 @@ int main() {
     if(delete2("./link1") == -1){
         printf("ERROR NA DELECAO DO LINK1");
     }
-    printFolders(currentPath.clusterNo);
+    printFolders(caminho_atual.clusterNo);
     printf("\nDataCluster 9 depois da delecao:\n");    
     printDataCluster(9);
     printFAT(0);

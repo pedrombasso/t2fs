@@ -1,5 +1,5 @@
-#ifndef __DISK___
-#define __DISK___
+#ifndef __SUPORTE__
+#define __SUPORTE__
 #include "t2fs.h"
 
 #define END_OF_FILE 0xFFFFFFFF
@@ -9,7 +9,6 @@
 #define MAX_NUM_FILES 10
 
 #define LIMITES_ABERTOS 10 
-
 
 struct t2fs_superbloco super_bloco;
 

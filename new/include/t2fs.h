@@ -111,7 +111,9 @@ Função:	Abre um arquivo existente no disco.
 Entra:	filename -> nome do arquivo a ser apagado.
 
 Saída:	Se a operação foi realizada com sucesso, a função retorna o handle do arquivo (número positivo)
-	Em caso de erro, deve ser retornado um valor negativo
+	Em caso de er
+
+ro, deve ser retornado um valor negativo
 -----------------------------------------------------------------------------*/
 FILE2 open2 (char *filename);
 
