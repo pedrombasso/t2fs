@@ -225,7 +225,7 @@ int escrever_cluster(int clusterNo, unsigned char* buffer, int posicao, int tama
     return posicao + tamanho;
 }
 
-int caminho_para_cluster(char* path) {
+int caminho_para_cluster(char* caminho) {
     int i;
     int found = 0;
     int pathsNo = 0;
@@ -233,11 +233,11 @@ int caminho_para_cluster(char* path) {
     int pathComplete = 0;
     unsigned int currentCluster;
     char* pathTok;
-    char* pathcpy = malloc(sizeof(char)*(strlen(path)+1));
+    char* pathcpy = malloc(sizeof(char)*(strlen(caminho)+1));
     int folderSize = ( (SECTOR_SIZE*super_bloco.SectorsPerCluster) / sizeof(struct t2fs_record) );
     struct t2fs_record* folderContent = malloc(sizeof(struct t2fs_record)*( (SECTOR_SIZE*super_bloco.SectorsPerCluster) / sizeof(struct t2fs_record) ));
 
-    strcpy(pathcpy,path);
+    strcpy(pathcpy,caminho);
 
     if (pathcpy[0] == '/') {
         currentCluster = super_bloco.RootDirCluster;
@@ -286,28 +286,28 @@ int caminho_para_cluster(char* path) {
 }
 
 int procurar_cluster(int* clusterReturn) { 
-    int functionReturn = 0;
+    int retorno = 0;
     int clusterNo = 1;
-    DWORD value = SETOR_INACESSIVEL;
-    while(functionReturn == 0 && value != 0) {
+    DWORD valor = SETOR_INACESSIVEL;
+    while(retorno == 0 && valor != 0) {
         clusterNo += 1;
-        functionReturn = ler_FAT(clusterNo,&value);
+        retorno = ler_FAT(clusterNo,&valor);
     }
-    if(functionReturn == -1) {
+    if(retorno == -1) {
         *clusterReturn = -1;
     } else {
         *clusterReturn = clusterNo;
     }
-    return functionReturn;
+    return retorno;
 }
 
-int tokenizePath(char* path, char*** tokenized) {
+int tokenizePath(char* caminho, char*** tokenized) {
     int i;
     int countFolders = 1;
-    char * pathcpy = malloc(sizeof(char)*(strlen(path)+1));
+    char * pathcpy = malloc(sizeof(char)*(strlen(caminho)+1));
     char * pathTok;
 
-    strcpy(pathcpy, path);
+    strcpy(pathcpy, caminho);
 
     pathTok = strtok(pathcpy,"/");
 
@@ -320,7 +320,7 @@ int tokenizePath(char* path, char*** tokenized) {
 
     *tokenized = malloc(sizeof(char*)*countFolders);
 
-    strcpy(pathcpy, path);
+    strcpy(pathcpy, caminho);
 
     pathTok = strtok(pathcpy,"/");
 
