@@ -463,7 +463,7 @@ int mkdir(char * path){
     one_dot.bytesFileSize = SECTOR_SIZE*super_bloco.SectorsPerCluster;
     one_dot.clustersFileSize = 1;
     one_dot.firstCluster = firstClusterFreeInFAT;
-    ler_cluster_pasta(firstClusterFreeInFAT, one_dot);
+    escrever_cluster_pasta(firstClusterFreeInFAT, one_dot);
 
 
     two_dot.TypeVal = TYPEVAL_DIRETORIO;
@@ -471,7 +471,7 @@ int mkdir(char * path){
     two_dot.bytesFileSize = SECTOR_SIZE*super_bloco.SectorsPerCluster;
     two_dot.clustersFileSize = 1;
     two_dot.firstCluster = clusterDotDot;
-    ler_cluster_pasta(firstClusterFreeInFAT, two_dot);
+    escrever_cluster_pasta(firstClusterFreeInFAT, two_dot);
 
 
     folder.TypeVal = TYPEVAL_DIRETORIO;
@@ -479,7 +479,7 @@ int mkdir(char * path){
     folder.bytesFileSize = SECTOR_SIZE*super_bloco.SectorsPerCluster;;
     folder.clustersFileSize = 1;
     folder.firstCluster = firstClusterFreeInFAT;
-    if(ler_cluster_pasta(clusterDotDot, folder) == -1){
+    if(escrever_cluster_pasta(clusterDotDot, folder) == -1){
         return -1;
     }
 
@@ -736,7 +736,7 @@ FILE2 createFile(char * filename){
     toRecord.firstCluster = firstClusterFreeInFAT;
 
    
-    if(ler_cluster_pasta(clusterToRecordFile, toRecord) == - 1){
+    if(escrever_cluster_pasta(clusterToRecordFile, toRecord) == - 1){
         return -1;
     }    
     escrever_FAT(firstClusterFreeInFAT, END_OF_FILE);
