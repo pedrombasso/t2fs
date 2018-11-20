@@ -491,7 +491,7 @@ int mkdir(char * path){
 
     return 0;
 }
-int write_zero(int clusterNo, struct t2fs_record folder, char * fileName, BYTE TypeValEntrada) {
+int zerar(int clusterNo, struct t2fs_record folder, char * fileName, BYTE TypeValEntrada) {
     int i;
     int k = 0;
     int written = 0;
@@ -906,7 +906,7 @@ int deletar_arquivo(char * filename){
     folderContent.clustersFileSize = 0;
     folderContent.firstCluster = 0;
 
-    if(write_zero(clusterOfDir, folderContent, secondOut, typeToDelete) == -1){
+    if(zerar(clusterOfDir, folderContent, secondOut, typeToDelete) == -1){
         free(absolute);
         free(firstOut);
         free(secondOut);

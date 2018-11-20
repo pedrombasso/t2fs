@@ -57,7 +57,7 @@ int esta_no_cluser(int clusterNo, char * fileName, BYTE TypeValEntrada);
 
 int nome_correto(char * name);
 
-int write_zero(int clusterNo, struct t2fs_record folder, char * fileName, BYTE TypeValEntrada);
+int zerar(int clusterNo, struct t2fs_record folder, char * fileName, BYTE TypeValEntrada);
 
 DIRENT2 searchDirByHandle(DIR2 handle);
 
