@@ -168,53 +168,53 @@ int ler_cluster(int clusterNo, unsigned char* buffer) {
 
 struct t2fs_record* ler_cluster_pasta(int clusterNo) {
     int j;
-    int folderSizeInBytes = sizeof(struct t2fs_record)*( (SECTOR_SIZE*super_bloco.SectorsPerCluster) / sizeof(struct t2fs_record) );
-    unsigned int sector = super_bloco.DataSectorStart + super_bloco.SectorsPerCluster*clusterNo;
+    int tamanho_pasta_b = sizeof(struct t2fs_record)*( (SECTOR_SIZE*super_bloco.SectorsPerCluster) / sizeof(struct t2fs_record) );
+    unsigned int setor = super_bloco.DataSectorStart + super_bloco.SectorsPerCluster*clusterNo;
     unsigned char* buffer = malloc(sizeof(unsigned char)*SECTOR_SIZE*super_bloco.SectorsPerCluster);
-    struct t2fs_record* folderContent = malloc(folderSizeInBytes);
+    struct t2fs_record* conteudo_pasta = malloc(tamanho_pasta_b);
 
-    if (sector >= super_bloco.DataSectorStart && sector < super_bloco.NofSectors) {
+    if (setor >= super_bloco.DataSectorStart && setor < super_bloco.NofSectors) {
         ler_cluster(clusterNo, buffer);
 
-        for(j = 0; j < folderSizeInBytes/sizeof(struct t2fs_record); j++) {
-            folderContent[j].TypeVal = (BYTE) *(buffer + sizeof(struct t2fs_record)*j);
-            memcpy(folderContent[j].name, buffer + 1 + sizeof(struct t2fs_record)*j, 51);
-            folderContent[j].bytesFileSize = converter_para_DWORD(buffer + 52 + sizeof(struct t2fs_record)*j);
-            folderContent[j].clustersFileSize = converter_para_DWORD(buffer + 56 + sizeof(struct t2fs_record)*j);
-            folderContent[j].firstCluster = converter_para_DWORD(buffer + 60 + sizeof(struct t2fs_record)*j);
+        for(j = 0; j < tamanho_pasta_b/sizeof(struct t2fs_record); j++) {
+            conteudo_pasta[j].TypeVal = (BYTE) *(buffer + sizeof(struct t2fs_record)*j);
+            memcpy(conteudo_pasta[j].name, buffer + 1 + sizeof(struct t2fs_record)*j, 51);
+            conteudo_pasta[j].bytesFileSize = converter_para_DWORD(buffer + 52 + sizeof(struct t2fs_record)*j);
+            conteudo_pasta[j].clustersFileSize = converter_para_DWORD(buffer + 56 + sizeof(struct t2fs_record)*j);
+            conteudo_pasta[j].firstCluster = converter_para_DWORD(buffer + 60 + sizeof(struct t2fs_record)*j);
         }
         free(buffer);
-        return folderContent;
+        return conteudo_pasta;
     }
     free(buffer);
     return NULL;
 }
 
 unsigned char* ler_dado_cluster (int clusterNo){
-    unsigned int sector = super_bloco.DataSectorStart + super_bloco.SectorsPerCluster*clusterNo;
+    unsigned int setor = super_bloco.DataSectorStart + super_bloco.SectorsPerCluster*clusterNo;
     unsigned char* buffer = malloc(sizeof(unsigned char)*SECTOR_SIZE*super_bloco.SectorsPerCluster); 
-    if (sector >= super_bloco.DataSectorStart && sector < super_bloco.NofSectors) {
+    if (setor >= super_bloco.DataSectorStart && setor < super_bloco.NofSectors) {
         ler_cluster(clusterNo, buffer);
         return buffer;
     }
     return NULL;
 }
 
-int escrever_cluster(int clusterNo, unsigned char* buffer, int position, int size) {
+int escrever_cluster(int clusterNo, unsigned char* buffer, int posicao, int tamanho) {
     int j;
     int k = 0;
     unsigned int sectorToWrite;
     unsigned int sector = super_bloco.DataSectorStart + super_bloco.SectorsPerCluster*clusterNo;
     unsigned char* newBuffer = malloc(sizeof(unsigned char)*SECTOR_SIZE*super_bloco.SectorsPerCluster);
 
-    if (size > SECTOR_SIZE*super_bloco.SectorsPerCluster || (position + size) > SECTOR_SIZE*super_bloco.SectorsPerCluster) {
+    if (tamanho > SECTOR_SIZE*super_bloco.SectorsPerCluster || (posicao + tamanho) > SECTOR_SIZE*super_bloco.SectorsPerCluster) {
         return -1;
     }
 
     ler_cluster(clusterNo, newBuffer);
 
-    for(j = position; j < size + position; j++){
-        newBuffer[j] = buffer[j - position];
+    for(j = posicao; j < tamanho + posicao; j++){
+        newBuffer[j] = buffer[j - posicao];
     }
 
     for(sectorToWrite = sector; sectorToWrite < (sector + super_bloco.SectorsPerCluster); sectorToWrite++) {
@@ -222,7 +222,7 @@ int escrever_cluster(int clusterNo, unsigned char* buffer, int position, int siz
         k += 256;
     }
     free(newBuffer);
-    return position + size;
+    return posicao + tamanho;
 }
 
 int caminho_para_cluster(char* path) {
