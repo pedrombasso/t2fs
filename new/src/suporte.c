@@ -1003,11 +1003,11 @@ int link(char * caminho, char ** output) {
     return 1;
 }
 
-int escreve_arquivo(FILE2 handle, char * buffer, int size) {
+int escreve_arquivo(FILE2 handle, char * buffer, int tamanho) {
     int i = 0;
     int fileNo;
     int found = 0;
-    int remainingSize = size;
+    int remainingSize = tamanho;
     int bytesWritten = 0;
     int currentPointerInCluster;
     int currentCluster;
@@ -1045,9 +1045,9 @@ int escreve_arquivo(FILE2 handle, char * buffer, int size) {
     }
 
     if((remainingSize + currentPointerInCluster) <= (clusterSize)){
-        escrever_cluster(currentCluster,(unsigned char*)(buffer),currentPointerInCluster,size);
-        bytesWritten += size;
-        remainingSize -= size;
+        escrever_cluster(currentCluster,(unsigned char*)(buffer),currentPointerInCluster,tamanho);
+        bytesWritten += tamanho;
+        remainingSize -= tamanho;
     } else {
         escrever_cluster(currentCluster,(unsigned char*)(buffer),currentPointerInCluster,(clusterSize - currentPointerInCluster));
         remainingSize -= (clusterSize - currentPointerInCluster);
@@ -1105,7 +1105,7 @@ int escreve_arquivo(FILE2 handle, char * buffer, int size) {
     return bytesWritten;
 }
 
-int ler_arquivo (FILE2 handle, char *buffer, int size){
+int ler_arquivo (FILE2 handle, char *buffer, int tamanho){
 
     int found=0;
     int currentPointerInCluster;
@@ -1133,18 +1133,18 @@ int ler_arquivo (FILE2 handle, char *buffer, int size){
     currentCluster = arquivos_abertos[fileNo].clusterNo;
     prebuffer=ler_dado_cluster(currentCluster);
 
-    while((DWORD)currentCluster != FIM_ARQUIVO && i<size && (DWORD)currentCluster != SETOR_INACESSIVEL){
+    while((DWORD)currentCluster != FIM_ARQUIVO && i<tamanho && (DWORD)currentCluster != SETOR_INACESSIVEL){
         
-        while(currentPointerInCluster < SECTOR_SIZE*super_bloco.SectorsPerCluster  && prebuffer[currentPointerInCluster] != '\0' && i<size){
+        while(currentPointerInCluster < SECTOR_SIZE*super_bloco.SectorsPerCluster  && prebuffer[currentPointerInCluster] != '\0' && i<tamanho){
             buffer[i]=(unsigned char)prebuffer[currentPointerInCluster];            
             currentPointerInCluster++;
             i++;
         }
-        if(i>=size){            
+        if(i>=tamanho){            
             return -1;
         }
          
-        if(i<size || i>=clusterCount*SECTOR_SIZE*super_bloco.SectorsPerCluster){
+        if(i<tamanho || i>=clusterCount*SECTOR_SIZE*super_bloco.SectorsPerCluster){
             if(ler_FAT(currentCluster,&value) != 0) {
                 return -2;
             }else{
