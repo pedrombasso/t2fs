@@ -2,11 +2,9 @@
 #define __SUPORTE__
 #include "t2fs.h"
 
-#define END_OF_FILE 0xFFFFFFFF
+#define FIM_ARQUIVO 0xFFFFFFFF
 
-#define BAD_SECTOR 0xFFFFFFFE
-
-#define MAX_NUM_FILES 10
+#define SETOR_INACESSIVEL 0xFFFFFFFE
 
 #define LIMITES_ABERTOS 10 
 

@@ -85,7 +85,7 @@ int escrever_FAT(int clusterNo, DWORD value) {
 
     if (sector >= super_bloco.pFATSectorStart && sector < super_bloco.DataSectorStart) { 
         ler_FAT(clusterNo, &badSectorCheck);
-        if (badSectorCheck == BAD_SECTOR) { 
+        if (badSectorCheck == SETOR_INACESSIVEL) { 
             return -1;
         }
 
@@ -289,7 +289,7 @@ int caminho_para_cluster(char* path) {
 int procurar_cluster(int* clusterReturn) { 
     int functionReturn = 0;
     int clusterNo = 1;
-    DWORD value = BAD_SECTOR;
+    DWORD value = SETOR_INACESSIVEL;
     while(functionReturn == 0 && value != 0) {
         clusterNo += 1;
         functionReturn = ler_FAT(clusterNo,&value);
@@ -482,7 +482,7 @@ int mkdir(char * path){
         return -1;
     }
 
-    escrever_FAT(firstClusterFreeInFAT, END_OF_FILE);
+    escrever_FAT(firstClusterFreeInFAT, FIM_ARQUIVO);
 
     free(absolute);
     free(firstOut);
@@ -738,7 +738,7 @@ FILE2 createFile(char * filename){
     if(escrever_cluster_pasta(clusterToRecordFile, toRecord) == - 1){
         return -1;
     }    
-    escrever_FAT(firstClusterFreeInFAT, END_OF_FILE);
+    escrever_FAT(firstClusterFreeInFAT, FIM_ARQUIVO);
     
     return (openFile (filename));
 }
@@ -746,7 +746,7 @@ FILE2 createFile(char * filename){
 int novo_handle(){
     int i;
     
-    for(i = 0; i < MAX_NUM_FILES; i++){
+    for(i = 0; i < LIMITES_ABERTOS; i++){
         if(arquivos_abertos[i].file == -1){
             return (i+1);
         }
@@ -819,7 +819,7 @@ FILE2 openFile (char * filename){
 
 int fechar_arquivo(FILE2 handle){
     int i;
-    for(i = 0; i < MAX_NUM_FILES; i++){
+    for(i = 0; i < LIMITES_ABERTOS; i++){
         if(arquivos_abertos[i].file == handle){
             arquivos_abertos[i].file = -1;
             arquivos_abertos[i].clusterNo = -1;
@@ -914,14 +914,14 @@ int deletar_arquivo(char * filename){
 
     fechar_arquivo_cluster(clusterToDelete);
 
-    while( FATrepresentation != END_OF_FILE && FATrepresentation != BAD_SECTOR){
+    while( FATrepresentation != FIM_ARQUIVO && FATrepresentation != SETOR_INACESSIVEL){
 
         ler_FAT(clusterToDelete,&FATrepresentation);
         escrever_FAT(clusterToDelete, 0);
         
         escrever_cluster(clusterToDelete,bufferWithNulls,0,SECTOR_SIZE*super_bloco.SectorsPerCluster);
         
-        if(FATrepresentation != END_OF_FILE && FATrepresentation != BAD_SECTOR){
+        if(FATrepresentation != FIM_ARQUIVO && FATrepresentation != SETOR_INACESSIVEL){
             clusterToDelete = (int) FATrepresentation;
         }
 
@@ -934,7 +934,7 @@ int deletar_arquivo(char * filename){
 
 int fechar_arquivo_cluster(int clusterToClose){
     int i;
-    for(i = 0; i < MAX_NUM_FILES; i++){
+    for(i = 0; i < LIMITES_ABERTOS; i++){
         if(arquivos_abertos[i].clusterNo == clusterToClose){
             arquivos_abertos[i].file = -1;
             arquivos_abertos[i].clusterNo = -1;
@@ -1019,7 +1019,7 @@ int escreve_arquivo(FILE2 handle, char * buffer, int size) {
 
     DWORD value;
 
-    while(i < MAX_NUM_FILES && !found){
+    while(i < LIMITES_ABERTOS && !found){
         if (handle == arquivos_abertos[i].file) {
             fileNo = i;
             found = 1;
@@ -1040,7 +1040,7 @@ int escreve_arquivo(FILE2 handle, char * buffer, int size) {
             return -1;
         }
         nextCluster = (int)value;
-        if((DWORD)nextCluster != END_OF_FILE) {
+        if((DWORD)nextCluster != FIM_ARQUIVO) {
             currentCluster = nextCluster;
         }
         currentPointerInCluster -= (clusterSize);
@@ -1056,12 +1056,12 @@ int escreve_arquivo(FILE2 handle, char * buffer, int size) {
         bytesWritten += (clusterSize - currentPointerInCluster);
     }
 
-    while((DWORD)nextCluster != END_OF_FILE && remainingSize > 0) {
+    while((DWORD)nextCluster != FIM_ARQUIVO && remainingSize > 0) {
         if(ler_FAT(nextCluster,&value) != 0) {
             return -1;
         }
         nextCluster = (int)value;
-        if((DWORD)nextCluster != END_OF_FILE) {
+        if((DWORD)nextCluster != FIM_ARQUIVO) {
             currentCluster = nextCluster;
 
             if(remainingSize <= (clusterSize)){
@@ -1081,7 +1081,7 @@ int escreve_arquivo(FILE2 handle, char * buffer, int size) {
                 return -1;
             }
             escrever_FAT(currentCluster,nextCluster);
-            escrever_FAT(nextCluster,END_OF_FILE);
+            escrever_FAT(nextCluster,FIM_ARQUIVO);
             escrever_cluster(nextCluster,(unsigned char*)(buffer + bytesWritten),0,remainingSize);
             bytesWritten += remainingSize;
             remainingSize -= remainingSize;
@@ -1090,7 +1090,7 @@ int escreve_arquivo(FILE2 handle, char * buffer, int size) {
                 return -1;
             }
             escrever_FAT(currentCluster,nextCluster);
-            escrever_FAT(nextCluster,END_OF_FILE);
+            escrever_FAT(nextCluster,FIM_ARQUIVO);
             escrever_cluster(nextCluster,(unsigned char*)(buffer + bytesWritten),0,(clusterSize));
             currentCluster = nextCluster;
             remainingSize -= (clusterSize);
@@ -1120,7 +1120,7 @@ int ler_arquivo (FILE2 handle, char *buffer, int size){
     int clusterCount=0;
     unsigned char *prebuffer=malloc(sizeof(unsigned char)*SECTOR_SIZE*super_bloco.SectorsPerCluster+1);
 
-    for(j=0;j<MAX_NUM_FILES && found==0;j++){
+    for(j=0;j<LIMITES_ABERTOS && found==0;j++){
         if(arquivos_abertos[j].file == handle){
             found=1;
             fileNo=j;
@@ -1135,7 +1135,7 @@ int ler_arquivo (FILE2 handle, char *buffer, int size){
     currentCluster = arquivos_abertos[fileNo].clusterNo;
     prebuffer=ler_dado_cluster(currentCluster);
 
-    while((DWORD)currentCluster != END_OF_FILE && i<size && (DWORD)currentCluster != BAD_SECTOR){
+    while((DWORD)currentCluster != FIM_ARQUIVO && i<size && (DWORD)currentCluster != SETOR_INACESSIVEL){
         
         while(currentPointerInCluster < SECTOR_SIZE*super_bloco.SectorsPerCluster  && prebuffer[currentPointerInCluster] != '\0' && i<size){
             buffer[i]=(unsigned char)prebuffer[currentPointerInCluster];            
@@ -1179,7 +1179,7 @@ int tamanho_real (FILE2 handle){
     int i=0;
     unsigned char *prebuffer=malloc(sizeof(unsigned char)*SECTOR_SIZE*super_bloco.SectorsPerCluster+1);
 
-    for(j=0;j<MAX_NUM_FILES && found==0;j++){
+    for(j=0;j<LIMITES_ABERTOS && found==0;j++){
         if(arquivos_abertos[j].file == handle){
             found=1;
             fileNo=j;
@@ -1193,7 +1193,7 @@ int tamanho_real (FILE2 handle){
     currentCluster = arquivos_abertos[fileNo].clusterNo;
     prebuffer=ler_dado_cluster(currentCluster);
 
-    while((DWORD)currentCluster != END_OF_FILE && (DWORD)currentCluster != BAD_SECTOR){
+    while((DWORD)currentCluster != FIM_ARQUIVO && (DWORD)currentCluster != SETOR_INACESSIVEL){
 
         while(currentPointerInCluster <  SECTOR_SIZE*super_bloco.SectorsPerCluster && prebuffer[currentPointerInCluster] != '\0') {
             currentPointerInCluster++;
@@ -1205,7 +1205,7 @@ int tamanho_real (FILE2 handle){
         nextCluster = (int)value;
         free(prebuffer);
         prebuffer=malloc(sizeof(unsigned char)*SECTOR_SIZE*super_bloco.SectorsPerCluster);
-        if((DWORD)nextCluster != END_OF_FILE){
+        if((DWORD)nextCluster != FIM_ARQUIVO){
             prebuffer=ler_dado_cluster(nextCluster);
         }
         currentPointerInCluster=0;
@@ -1244,7 +1244,7 @@ int update_tamanho(FILE2 handle,DWORD newFileSize){
     int foundinfolder =0;
     int count;
     unsigned char * buffer = malloc(sizeof(struct t2fs_record));
-    for(j=0;j<MAX_NUM_FILES && found==0;j++){
+    for(j=0;j<LIMITES_ABERTOS && found==0;j++){
         if(arquivos_abertos[j].file == handle){
             found=1;
             fileNo=j;
