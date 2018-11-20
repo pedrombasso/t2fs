@@ -427,7 +427,7 @@ int mkdir(char * path){
         free(secondOut);
         return -1;
     }
-    if(!(esta_no_cluser(secondOut))){
+    if(!(nome_correto(secondOut))){
         free(absolute);
         free(firstOut);
         free(secondOut);
@@ -554,7 +554,7 @@ int esta_no_cluser(int clusterNo, char * fileName, BYTE TypeValEntrada) {
     return 0;
 }
 
-int esta_no_cluser(char * name){
+int nome_correto(char * name){
     if(strcmp(name, ".") == 0){
         return 0;
     }
@@ -684,7 +684,7 @@ FILE2 createFile(char * filename){
         return -1;
     }
 
-    if(!esta_no_cluser(secondOut)){
+    if(!nome_correto(secondOut)){
         return -1;
     }  
 
@@ -701,7 +701,7 @@ FILE2 createFile(char * filename){
         return -1;
     }
     
-    if(!(esta_no_cluser(secondOut))){
+    if(!(nome_correto(secondOut))){
         free(absolute);
         free(firstOut);
         free(secondOut);
@@ -781,7 +781,7 @@ FILE2 openFile (char * filename){
         return -2;
     }
 
-    if(!esta_no_cluser(secondOut)){ 
+    if(!nome_correto(secondOut)){ 
         return -1;
     }    
     clusterOfDir = caminho_para_cluster(firstOut);
@@ -869,7 +869,7 @@ int deletar_arquivo(char * filename){
         return -1;
     }
 
-    if(!esta_no_cluser(secondOut)){
+    if(!nome_correto(secondOut)){
         return -1;
     }  
 
